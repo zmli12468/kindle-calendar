@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kindle日历时间</title>
+    <style>
+        /* 墨水屏优化样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-text-size-adjust: none;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f8f8;
+            color: #333;
+            line-height: 1.5;
+            padding: 15px;
+            max-width: 800px;
+            margin: 0 auto;
+            -webkit-font-smoothing: none;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #333;
+        }
+        
+        .time-container {
+            text-align: center;
+            margin: 25px 0;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .current-time {
+            font-size: 3.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #000;
+            letter-spacing: 2px;
+        }
+        
+        .current-date {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+            color: #444;
+        }
+        
+        .current-week {
+            font-size: 1.5rem;
+            color: #666;
+        }
+        
+        .calendar-container {
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .calendar-title {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #000;
+        }
+        
+        .nav-button {
+            background: none;
+            border: 2px solid #333;
+            color: #333;
+            font-size: 1.2rem;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            line-height: 1;
+        }
+        
+        .nav-button:hover {
+            background-color: #f0f0f0;
+        }
+        
+        .weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            margin-bottom: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .weekday {
+            padding: 10px 5px;
+            color: #000;
+        }
+        
+        .weekday.sun {
+            color: #d00;
+        }
+        
+        .weekday.sat {
+            color: #00d;
+        }
+        
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+        }
+        
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            cursor: default;
+            border: 1px solid transparent;
+        }
+        
+        .calendar-day.today {
+            background-color: #000;
+            color: #fff;
+            border-radius: 50%;
+            font-weight: bold;
+        }
+        
+        .calendar-day.other-month {
+            color: #aaa;
+        }
+        
+        .calendar-day.sun {
+            color: #d00;
+        }
+        
+        .calendar-day.sat {
+            color: #00d;
+        }
+        
+        .calendar-day.other-month.sun {
+            color: #faa;
+        }
+        
+        .calendar-day.other-month.sat {
+            color: #aaf;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 15px;
+            border-top: 1px solid #ddd;
+            font-size: 0.9rem;
+            color: #777;
+        }
+        
+        .refresh-info {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: #555;
+        }
+        
+        /* Kindle屏幕优化 */
+        @media (max-width: 600px) {
+            .current-time {
+                font-size: 2.8rem;
+            }
+            
+            .current-date {
+                font-size: 1.5rem;
+            }
+            
+            .calendar-title {
+                font-size: 1.5rem;
+            }
+            
+            .calendar-day {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Kindle日历时间</h1>
+        <p>墨水屏优化的日期时间显示</p>
+    </div>
+    
+    <div class="time-container">
+        <div class="current-time" id="currentTime">00:00:00</div>
+        <div class="current-date" id="currentDate">0000年00月00日</div>
+        <div class="current-week" id="currentWeek">星期X</div>
+    </div>
+    
+    <div class="calendar-container">
+        <div class="calendar-header">
+            <button class="nav-button" id="prevMonth" title="上个月">‹</button>
+            <div class="calendar-title" id="calendarTitle">0000年00月</div>
+            <button class="nav-button" id="nextMonth" title="下个月">›</button>
+        </div>
+        
+        <div class="weekdays">
+            <div class="weekday sun">日</div>
+            <div class="weekday">一</div>
+            <div class="weekday">二</div>
+            <div class="weekday">三</div>
+            <div class="weekday">四</div>
+            <div class="weekday">五</div>
+            <div class="weekday sat">六</div>
+        </div>
+        
+        <div class="calendar-grid" id="calendarGrid">
+            <!-- 日历日期由JavaScript动态生成 -->
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p>专为Kindle墨水屏优化 | 页面每30秒自动刷新</p>
+        <div class="refresh-info">
+            <p>下次刷新：<span id="nextRefresh">30</span>秒</p>
+            <p>Kindle上请保持此页面打开以自动更新时间</p>
+        </div>
+    </div>
+
+    <script>
+        // 获取DOM元素
+        const currentTimeEl = document.getElementById('currentTime');
+        const currentDateEl = document.getElementById('currentDate');
+        const currentWeekEl = document.getElementById('currentWeek');
+        const calendarTitleEl = document.getElementById('calendarTitle');
+        const calendarGridEl = document.getElementById('calendarGrid');
+        const prevMonthBtn = document.getElementById('prevMonth');
+        const nextMonthBtn = document.getElementById('nextMonth');
+        const nextRefreshEl = document.getElementById('nextRefresh');
+        
+        // 当前显示的月份和年份
+        let currentDate = new Date();
+        let currentMonth = currentDate.getMonth();
+        let currentYear = currentDate.getFullYear();
+        
+        // 星期中文名称
+        const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
+        
+        // 月份中文名称
+        const monthNames = [
+            '一月', '二月', '三月', '四月', '五月', '六月',
+            '七月', '八月', '九月', '十月', '十一月', '十二月'
+        ];
+        
+        // 更新时间显示
+        function updateTime() {
+            const now = new Date();
+            
+            // 格式化时间
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            
+            // 格式化日期
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            
+            // 更新显示
+            currentTimeEl.textContent = `${hours}:${minutes}:${seconds}`;
+            currentDateEl.textContent = `${year}年${month}月${day}日`;
+            currentWeekEl.textContent = `星期${weekDays[now.getDay()]}`;
+            
+            // 更新页面标题
+            document.title = `${hours}:${minutes} - Kindle日历时间`;
+        }
+        
+        // 生成日历
+        function generateCalendar(month, year) {
+            // 清空日历网格
+            calendarGridEl.innerHTML = '';
+            
+            // 更新日历标题
+            calendarTitleEl.textContent = `${year}年${monthNames[month]}`;
+            
+            // 获取该月的第一天和最后一天
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const today = new Date();
+            
+            // 获取第一天是星期几（0-星期日，6-星期六）
+            const firstDayOfWeek = firstDay.getDay();
+            
+            // 获取该月的总天数
+            const totalDays = lastDay.getDate();
+            
+            // 上个月的最后几天
+            const prevMonthLastDay = new Date(year, month, 0).getDate();
+            
+            // 生成上个月的日期
+            for (let i = firstDayOfWeek - 1; i >= 0; i--) {
+                const day = prevMonthLastDay - i;
+                const dayEl = document.createElement('div');
+                dayEl.className = 'calendar-day other-month';
+                dayEl.textContent = day;
+                
+                // 判断是否为周六或周日
+                if ((i + 1) % 7 === 0) {
+                    dayEl.classList.add('sat');
+                } else if ((i + 1) % 7 === 1) {
+                    dayEl.classList.add('sun');
+                }
+                
+                calendarGridEl.appendChild(dayEl);
+            }
+            
+            // 生成当前月的日期
+            for (let day = 1; day <= totalDays; day++) {
+                const dayEl = document.createElement('div');
+                dayEl.className = 'calendar-day';
+                dayEl.textContent = day;
+                
+                // 判断是否为今天
+                if (year === today.getFullYear() && 
+                    month === today.getMonth() && 
+                    day === today.getDate()) {
+                    dayEl.classList.add('today');
+                }
+                
+                // 判断是否为周六或周日
+                const dayOfWeek = new Date(year, month, day).getDay();
+                if (dayOfWeek === 0) {
+                    dayEl.classList.add('sun');
+                } else if (dayOfWeek === 6) {
+                    dayEl.classList.add('sat');
+                }
+                
+                calendarGridEl.appendChild(dayEl);
+            }
+            
+            // 计算还需要多少天才能填满6行（42天）
+            const totalCells = 42;
+            const cellsUsed = firstDayOfWeek + totalDays;
+            const remainingCells = totalCells - cellsUsed;
+            
+            // 生成下个月的日期
+            for (let day = 1; day <= remainingCells; day++) {
+                const dayEl = document.createElement('div');
+                dayEl.className = 'calendar-day other-month';
+                dayEl.textContent = day;
+                
+                // 判断是否为周六或周日
+                const cellIndex = cellsUsed + day;
+                if (cellIndex % 7 === 0) {
+                    dayEl.classList.add('sat');
+                } else if (cellIndex % 7 === 1) {
+                    dayEl.classList.add('sun');
+                }
+                
+                calendarGridEl.appendChild(dayEl);
+            }
+        }
+        
+        // 切换到上个月
+        function goToPrevMonth() {
+            currentMonth--;
+            if (currentMonth < 0) {
+                currentMonth = 11;
+                currentYear--;
+            }
+            generateCalendar(currentMonth, currentYear);
+        }
+        
+        // 切换到下个月
+        function goToNextMonth() {
+            currentMonth++;
+            if (currentMonth > 11) {
+                currentMonth = 0;
+                currentYear++;
+            }
+            generateCalendar(currentMonth, currentYear);
+        }
+        
+        // 刷新倒计时
+        let refreshCountdown = 30;
+        function updateRefreshCountdown() {
+            refreshCountdown--;
+            nextRefreshEl.textContent = refreshCountdown;
+            
+            if (refreshCountdown <= 0) {
+                // 刷新页面（Kindle上部分刷新可能会保持状态）
+                refreshCountdown = 30;
+                nextRefreshEl.textContent = refreshCountdown;
+                // 简单重新加载时间信息
+                updateTime();
+            }
+        }
+        
+        // 初始化
+        function init() {
+            // 设置初始时间
+            updateTime();
+            
+            // 生成当前月日历
+            generateCalendar(currentMonth, currentYear);
+            
+            // 添加事件监听器
+            prevMonthBtn.addEventListener('click', goToPrevMonth);
+            nextMonthBtn.addEventListener('click', goToNextMonth);
+            
+            // 设置定时器每秒更新时间
+            setInterval(updateTime, 1000);
+            
+            // 设置定时器更新刷新倒计时
+            setInterval(updateRefreshCountdown, 1000);
+            
+            // 添加键盘支持（Kindle可能有物理按键）
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowLeft') {
+                    goToPrevMonth();
+                } else if (e.key === 'ArrowRight') {
+                    goToNextMonth();
+                }
+            });
+        }
+        
+        // 页面加载完成后初始化
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
